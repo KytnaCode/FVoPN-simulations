@@ -11,6 +11,10 @@
   in {
     devShells = eachSystem (pkgs: {
       default = pkgs.mkShell {
+        nativeBuildInputs = with pkgs; [
+          python3Packages.numpy
+        ];
+
         buildInputs = with pkgs; [
           python3
           uv
