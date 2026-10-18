@@ -60,7 +60,7 @@ class VoteAuctionModelV2:
             return min(1, self.config.budgets.max())
 
         return self.level_price(n - 1) / (
-            self.expected_value(n) / self.expected_value(n - 1) * 3
+            self.expected_value(n) / self.expected_value(n - 1) / 2
         )
 
     def free_slots(self, n: int) -> int:
