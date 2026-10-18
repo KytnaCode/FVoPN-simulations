@@ -97,7 +97,7 @@ class VoteAuctionModelV2:
         weights = np.array([self.expected_value(n + 1) for n in range(l)])
 
         for i in range(l):
-            for j in range(cast(int, alpha * k**i) - self.__free_levels(i + 1)):
+            for _ in range(cast(int, alpha * k**i) - self.__free_levels(i + 1)):
                 p = self.level_price(i + 1)
 
                 minTopIndex = min(
