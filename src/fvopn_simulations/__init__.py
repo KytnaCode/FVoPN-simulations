@@ -1,4 +1,5 @@
-from .vote_auction import Vector, VoteAuctionModel, VoteAuctionModelConfig
+from .types import Vector
+from .vote_auction import VoteAuctionModel, VoteAuctionModelConfig
 
 
 def main() -> None:
