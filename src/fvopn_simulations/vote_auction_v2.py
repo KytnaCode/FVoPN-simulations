@@ -125,7 +125,7 @@ class VoteAuctionModelV2:
 
                 budgets[selected, 2] -= min(
                     cast(float, budgets[selected, 2][0]),
-                    cast(float, budgets[:, 1].mean() * 2),
+                    cast(float, budgets[:, 1].mean() / 5),
                 )
 
                 votes[selected, i] += 1
@@ -135,6 +135,7 @@ class VoteAuctionModelV2:
         votes = votes / votes.sum()
 
         return pd.DataFrame(
-            np.column_stack((budgets, votes)),
-            columns=["index", "start_budget", "budget", "votes"],
+            np.column_stack((budgets[:, 1], budgets[:, 2], votes)),
+            columns=["start_budget", "budget", "votes"],
+            index=budgets[:, 0],
         )
