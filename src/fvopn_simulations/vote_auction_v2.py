@@ -36,7 +36,7 @@ class VoteAuctionModelV2:
 
         return cast(float, self.__stealed_per_level(n) / (alpha * k ** (n - 1)))
 
-    def __number_of_levels(self):
+    def number_of_levels(self):
         alpha = self.config.root_slots
         k = self.config.multiplication_factor
 
@@ -47,26 +47,24 @@ class VoteAuctionModelV2:
         k = self.config.multiplication_factor
 
         x = 0
-        for i in range(self.__number_of_levels() - n):
+        for i in range(self.number_of_levels() - n):
             x += self.__stealed_per_level(i + n + 1)
 
         return cast(float, x / (alpha * (k ** (n + 1) - 1) / (k - 1)))
 
-    def __expected_value_per_vote(self, n: int):
+    def expected_value(self, n: int):
         return 1 - self.__stealed_per_vote(n) + self.__steal_bonus(n)
 
-    def __level_price(self, n: int) -> float:
+    def level_price(self, n: int) -> float:
         if n == 1:
             return min(1, self.config.budgets.max())
 
-        return self.__level_price(n - 1) / (
-            self.__expected_value_per_vote(n)
-            / self.__expected_value_per_vote(n - 1)
-            * 3
+        return self.level_price(n - 1) / (
+            self.expected_value(n) / self.expected_value(n - 1) * 3
         )
 
     def __free_levels(self, n: int) -> int:
-        l = self.__number_of_levels()
+        l = self.number_of_levels()
 
         if n != l:
             return 0
@@ -83,7 +81,7 @@ class VoteAuctionModelV2:
     def run(self):
         alpha = self.config.root_slots
         k = self.config.multiplication_factor
-        l = self.__number_of_levels()
+        l = self.number_of_levels()
 
         budgets = np.column_stack(
             (
@@ -96,11 +94,11 @@ class VoteAuctionModelV2:
         budgets = budgets[budgets[:, 2].argsort()]
 
         votes = np.zeros((budgets[:, 2].size, l))
-        weights = np.array([self.__expected_value_per_vote(n + 1) for n in range(l)])
+        weights = np.array([self.expected_value(n + 1) for n in range(l)])
 
         for i in range(l):
             for j in range(cast(int, alpha * k**i) - self.__free_levels(i + 1)):
-                p = self.__level_price(i + 1)
+                p = self.level_price(i + 1)
 
                 minTopIndex = min(
                     math.floor(budgets[:, 2].size * p), budgets[:, 2].size - 1
