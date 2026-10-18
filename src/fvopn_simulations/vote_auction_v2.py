@@ -63,7 +63,7 @@ class VoteAuctionModelV2:
             self.expected_value(n) / self.expected_value(n - 1) * 3
         )
 
-    def __free_levels(self, n: int) -> int:
+    def free_slots(self, n: int) -> int:
         l = self.number_of_levels()
 
         if n != l:
@@ -97,7 +97,7 @@ class VoteAuctionModelV2:
         weights = np.array([self.expected_value(n + 1) for n in range(l)])
 
         for i in range(l):
-            for _ in range(cast(int, alpha * k**i) - self.__free_levels(i + 1)):
+            for _ in range(cast(int, alpha * k**i) - self.free_slots(i + 1)):
                 p = self.level_price(i + 1)
 
                 minTopIndex = min(
