@@ -10,7 +10,7 @@ from fvopn_simulations.types import Vector
 
 @dataclass(frozen=True)
 class VoteAuctionModelV2Config:
-    budgets: np.ndarray[tuple[int], np.dtype[np.float64]]
+    budgets: Vector
     multiplication_factor: int
     root_slots: int
 
