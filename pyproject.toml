@@ -8,6 +8,9 @@ requires-python = ">=3.14"
 dependencies = [
     "hypothesis>=6.168.5",
     "numpy>=2.5.3",
+    "pandas>=3.0.6",
+    "pandas-stubs>=3.0.5.260914",
+    "pytest>=9.1.1",
 ]
 
 [project.scripts]
