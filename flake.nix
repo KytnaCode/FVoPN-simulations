@@ -19,6 +19,10 @@
           (python3.withPackages (p: with p; [jupyterlab]))
           uv
         ];
+
+        shellHook = ''
+          source ./.venv/bin/activate
+        '';
       };
     });
   };
