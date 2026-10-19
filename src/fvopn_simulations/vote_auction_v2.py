@@ -25,16 +25,25 @@ class VoteAuctionModelV2:
         self.config = conf
         self.rng = rng if rng != None else np.random.default_rng()
 
-    def __stealed_per_level(self, n: int):
+    def stolen_from_level(self, n: int):
         k = self.config.multiplication_factor
 
         return cast(float, 1 - (1 / k ** (n - 1)))
 
-    def __stealed_per_vote(self, n: int):
+    def stolen_from_vote(self, n: int):
+        return self.stolen_from_level(n) / self.nodes_on_level(n)
+
+    def nodes_on_level(self, n: int) -> int:
         alpha = self.config.root_slots
         k = self.config.multiplication_factor
 
-        return cast(float, self.__stealed_per_level(n) / (alpha * k ** (n - 1)))
+        return cast(int, alpha * k ** (n - 1))
+
+    def nodes_up_to_level(self, n: int) -> int:
+        alpha = self.config.root_slots
+        k = self.config.multiplication_factor
+
+        return cast(int, alpha * (k ** (n + 1) - 1) / (k - 1))
 
     def number_of_levels(self):
         alpha = self.config.root_slots
@@ -42,25 +51,25 @@ class VoteAuctionModelV2:
 
         return math.ceil(math.log((len(self.config.budgets) * (k - 1)) / alpha + 1, k))
 
-    def __steal_bonus(self, n: int):
-        alpha = self.config.root_slots
-        k = self.config.multiplication_factor
-
+    def stolen(self, n: int):
         x = 0
-        for i in range(self.number_of_levels() - n):
-            x += self.__stealed_per_level(i + n + 1)
 
-        return cast(float, x / (alpha * (k ** (n + 1) - 1) / (k - 1)))
+        for i in range(self.number_of_levels() - n):
+            x += self.stolen_from_level(i + n + 1)
+
+        return x / self.nodes_up_to_level(n)
 
     def expected_value(self, n: int):
-        return 1 - self.__stealed_per_vote(n) + self.__steal_bonus(n)
+        return 1 - self.stolen_from_vote(n) + self.stolen(n)
 
     def level_price(self, n: int) -> float:
         if n == 1:
             return min(1, self.config.budgets.max())
 
         return self.level_price(n - 1) / (
-            self.expected_value(n) / self.expected_value(n - 1) / 2
+            self.expected_value(n)
+            / self.expected_value(n - 1)
+            / 2  # <- This 2 is totally empiric. TODO: Make this a parameter.
         )
 
     def free_slots(self, n: int) -> int:
@@ -69,18 +78,13 @@ class VoteAuctionModelV2:
         if n != l:
             return 0
 
-        alpha = self.config.root_slots
-        k = self.config.multiplication_factor
-
-        N = math.trunc(cast(float, alpha * (k**l - 1) / (k - 1)))
+        N = math.trunc(cast(float, self.nodes_up_to_level(l - 1)))
 
         v = N - len(self.config.budgets)
 
         return v
 
     def run(self):
-        alpha = self.config.root_slots
-        k = self.config.multiplication_factor
         l = self.number_of_levels()
 
         budgets = np.column_stack(
@@ -97,7 +101,7 @@ class VoteAuctionModelV2:
         weights = np.array([self.expected_value(n + 1) for n in range(l)])
 
         for i in range(l):
-            for _ in range(cast(int, alpha * k**i) - self.free_slots(i + 1)):
+            for _ in range(self.nodes_on_level(i + 1) - self.free_slots(i + 1)):
                 p = self.level_price(i + 1)
 
                 minTopIndex = min(
@@ -125,7 +129,9 @@ class VoteAuctionModelV2:
 
                 budgets[selected, 2] -= min(
                     cast(float, budgets[selected, 2][0]),
-                    cast(float, budgets[:, 1].mean() / 5),
+                    cast(
+                        float, budgets[:, 1].mean() / 5
+                    ),  # This 1/5 is empiric, TODO: Make this a parameter.
                 )
 
                 votes[selected, i] += 1
