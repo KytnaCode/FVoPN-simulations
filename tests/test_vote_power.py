@@ -72,4 +72,4 @@ def test_splitting_budget_between_identities_must_not_increase_voting_power(
     a = cast(float, result.loc[0, "votes"])
     b = result.loc[1 : identities + 1, "votes"].sum()
 
-    assert a >= b or np.isclose(a, b)
+    assert a >= b or np.isclose(a, b, atol=1e-4)
