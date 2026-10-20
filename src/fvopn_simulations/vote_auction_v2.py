@@ -127,11 +127,12 @@ class VoteAuctionModelV2:
                     size=1,
                 )
 
+                # Empiric cost function.
+                cost = cast(float, (budgets[selected, 2][0] / 2) / budgets[:, 2].sum())
+
                 budgets[selected, 2] -= min(
                     cast(float, budgets[selected, 2][0]),
-                    cast(
-                        float, budgets[:, 1].mean() / 5
-                    ),  # This 1/5 is empiric, TODO: Make this a parameter.
+                    cost,
                 )
 
                 votes[selected, i] += 1
