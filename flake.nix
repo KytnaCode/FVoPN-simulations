@@ -18,6 +18,7 @@
         buildInputs = with pkgs; [
           (python3.withPackages (p: with p; [jupyterlab]))
           uv
+          gnumake
         ];
 
         shellHook = ''
