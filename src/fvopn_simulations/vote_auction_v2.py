@@ -127,7 +127,7 @@ class VoteAuctionModelV2:
                 )
 
                 # Empiric cost function.
-                cost = cast(float, (budgets[selected, 2][0] / 2) / budgets[:, 2].sum())
+                cost = cast(float, minTopValue / budgets[selected, 2][0])
 
                 budgets[selected, 2] -= min(
                     cast(float, budgets[selected, 2][0]),
