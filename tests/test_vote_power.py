@@ -4,7 +4,7 @@ import numpy as np
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from fvopn_simulations import VoteAuctionModelV2, VoteAuctionModelV2Config
+from fvopn_simulations import Vector, VoteAuctionModelV2, VoteAuctionModelV2Config
 
 
 @settings(deadline=None)
@@ -55,21 +55,27 @@ def test_splitting_budget_between_identities_must_not_increase_voting_power(
 
     budgets = rng.beta(a=0.5, b=8, size=size)
 
-    budgets[0] = whale_budget
+    def V(b: Vector):
+        conf = VoteAuctionModelV2Config(
+            budgets=b,
+            root_slots=root_slots,
+            multiplication_factor=multiplication_factor,
+        )
 
-    budgets[1 : identities + 1] = whale_budget / identities
+        model = VoteAuctionModelV2(conf, rng)
 
-    conf = VoteAuctionModelV2Config(
-        budgets=budgets,
-        root_slots=root_slots,
-        multiplication_factor=multiplication_factor,
-    )
+        result = model.run()
 
-    model = VoteAuctionModelV2(conf, rng)
+        return result["votes"]
 
-    result = model.run()
+    a_budgets = np.copy(budgets)
+    a_budgets[0] = whale_budget
 
-    a = cast(float, result.loc[0, "votes"])
-    b = result.loc[1 : identities + 1, "votes"].sum()
+    a = cast(float, V(a_budgets)[0])
+
+    b_budgets = np.copy(budgets)
+    b_budgets[0:identities] = whale_budget / identities
+
+    b = V(a_budgets)[0:identities].sum()
 
     assert a >= b or np.isclose(a, b, atol=1e-4)
