@@ -66,9 +66,10 @@ class VoteAuctionModelV2:
         if n == 1:
             return 0.1
 
-        p = (1 - self.level_price(n - 1)) * 0.8  # TODO: Improve this
-
-        return -p + 1
+        return (
+            (self.expected_value(n - 1) * self.level_price(n - 1))
+            / self.expected_value(n)
+        ) / 2
 
     def free_slots(self, n: int) -> int:
         l = self.number_of_levels()
