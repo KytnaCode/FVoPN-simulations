@@ -64,13 +64,11 @@ class VoteAuctionModelV2:
 
     def level_price(self, n: int) -> float:
         if n == 1:
-            return min(1, self.config.budgets.max())
+            return 0.1
 
-        return self.level_price(n - 1) / (
-            self.expected_value(n)
-            / self.expected_value(n - 1)
-            / 2  # <- This 2 is totally empiric. TODO: Make this a parameter.
-        )
+        p = (1 - self.level_price(n - 1)) * 0.8  # TODO: Improve this
+
+        return -p + 1
 
     def free_slots(self, n: int) -> int:
         l = self.number_of_levels()
