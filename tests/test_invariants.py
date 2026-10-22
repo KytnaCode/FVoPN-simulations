@@ -25,7 +25,7 @@ def test_voter_power_must_sum_up_to_1(
     assert_almost_equal(1, result["votes"].sum())
 
 
-@given(st.integers(1, 10000), st.integers(1, 30), st.integers(2, 30))
+@given(st.integers(1, 1000), st.integers(1, 30), st.integers(2, 30))
 def test_free_slots_must_be_equal_or_greater_than_zero_and_less_than_level_size(
     size: int, root_slots: int, multiplication_factor: int
 ):

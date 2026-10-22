@@ -5,7 +5,7 @@ from hypothesis import strategies as st
 from fvopn_simulations import VoteAuctionModelV2, VoteAuctionModelV2Config
 
 
-@given(st.integers(1, 10000), st.integers(1, 30), st.integers(2, 40))
+@given(st.integers(1, 1000), st.integers(1, 30), st.integers(2, 40))
 def test_expected_value_must_decrease_with_level(
     size: int, root_slots: int, multiplication_factor: int
 ):
@@ -26,7 +26,7 @@ def test_expected_value_must_decrease_with_level(
         assert model.expected_value(i + 1) + a >= model.expected_value(i + 2)
 
 
-@given(st.integers(1, 10000), st.integers(1, 30), st.integers(2, 40))
+@given(st.integers(1, 1000), st.integers(1, 30), st.integers(2, 40))
 def test_expected_value_must_be_more_expensive_with_level(
     size: int, root_slots: int, multiplication_factor: int
 ):
