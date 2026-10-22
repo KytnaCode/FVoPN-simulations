@@ -17,6 +17,7 @@
 
         buildInputs = with pkgs; [
           (python3.withPackages (p: with p; [jupyterlab]))
+          nbstripout
           uv
           gnumake
         ];
