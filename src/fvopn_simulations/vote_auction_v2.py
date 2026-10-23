@@ -31,7 +31,7 @@ class VoteAuctionModelV2:
         return cast(float, 1 - (1 / k ** (n - 1)))
 
     def stolen_from_vote(self, n: int):
-        return self.stolen_from_level(n) / self.nodes_on_level(n)
+        return self.stolen_from_level(n)
 
     def nodes_on_level(self, n: int) -> int:
         alpha = self.config.root_slots
@@ -64,12 +64,11 @@ class VoteAuctionModelV2:
 
     def level_price(self, n: int) -> float:
         if n == 1:
-            return 0.1
+            return 0.2
 
-        return (
-            (self.expected_value(n - 1) * self.level_price(n - 1))
-            / self.expected_value(n)
-        ) / 2
+        p = (1 - self.level_price(n - 1)) * 0.5
+
+        return -p + 1
 
     def free_slots(self, n: int) -> int:
         l = self.number_of_levels()
@@ -99,42 +98,55 @@ class VoteAuctionModelV2:
         votes = np.zeros((budgets[:, 2].size, l))
         weights = np.array([self.expected_value(n + 1) for n in range(l)])
 
+        stop = False
+
         for i in range(l):
+            if stop:
+                break
+
             for _ in range(self.nodes_on_level(i + 1) - self.free_slots(i + 1)):
                 p = self.level_price(i + 1)
 
-                minTopIndex = min(
-                    math.floor(budgets[:, 2].size * p), budgets[:, 2].size - 1
-                )
+                budgets = budgets[budgets[:, 2].argsort()]
 
-                minTopValue = cast(float, budgets[minTopIndex, 2])
+                minTopValue = cast(float, budgets[:, 2].max() * (1 - p))
 
-                elegibleBudgets = budgets[:, 2][budgets[:, 2] >= minTopValue]
+                elegibleBudgets = budgets[budgets[:, 2] >= minTopValue]
 
-                electionWeights = None
+                if len(elegibleBudgets) == 0:
+                    elegibleBudgets = budgets[0:1]
 
-                total = cast(float, np.sum(budgets[:, 2][budgets[:, 2] >= minTopValue]))
+                    if elegibleBudgets[0, 2] == 0:
+                        stop = True
+                        break
 
-                if elegibleBudgets.sum() > 0:
-                    electionWeights = cast(
-                        Vector, budgets[:, 2][budgets[:, 2] >= minTopValue] / total
-                    )
+                budgets = budgets[budgets[:, 0].argsort()]
 
-                selected = self.rng.choice(
-                    np.where(budgets[:, 2] >= minTopValue)[0],
+                total = cast(float, np.sum(elegibleBudgets[:, 2]))
+
+                electionWeights = cast(Vector, elegibleBudgets[:, 2] / total)
+
+                selected = self.rng.choice(  # pyright: ignore [reportAny]
+                    elegibleBudgets,
                     p=electionWeights,
                     size=1,
-                )
+                )[0]
+
+                selInd: int = math.trunc(cast(float, selected[0]))
+
+                budgets = budgets[budgets[:, 0].argsort()]
 
                 # Empiric cost function.
-                cost = cast(float, minTopValue / budgets[selected, 2][0])
-
-                budgets[selected, 2] -= min(
-                    cast(float, budgets[selected, 2][0]),
-                    cost,
+                cost = cast(
+                    float,
+                    minTopValue * (1 - budgets[selInd, 2] / budgets[:, 2].max()),
                 )
 
-                votes[selected, i] += 1
+                cost = min(cost, cast(float, budgets[selInd, 2]))
+
+                budgets[selInd, 2] -= cost
+
+                votes[selInd, i] += 1
 
         votes = votes @ weights
 
