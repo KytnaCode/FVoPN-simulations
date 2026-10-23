@@ -20,6 +20,6 @@ def test_expected_value_must_be_more_expensive_with_level(
     model = VoteAuctionModelV2(conf, rng)
 
     for i in range(model.number_of_levels() - 1):
-        assert model.expected_value(i + 1) * model.level_price(
-            i + 1
-        ) >= model.expected_value(i + 2) * model.level_price(i + 2)
+        assert model.expected_value(i + 1) * (
+            1 - model.level_price(i + 1)
+        ) >= model.expected_value(i + 2) * (1 - model.level_price(i + 2))
